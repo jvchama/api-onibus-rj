@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 import models
 import schemas
 from database import engine, SessionLocal, Base
+from bus_service import fetch_buses_by_line
 
 # Create tables that don't exist yet. In production you'd use Alembic
 # migrations instead, but this is a safe fallback for development.
@@ -20,8 +21,8 @@ app = FastAPI(
 # ---------------------------------------------------------------------------
 
 def get_db():
-    """Yields a database session and guarantees it's closed after the request,
-    even if an unhandled exception occurs."""
+    """Gera uma database session e garante seu fechamento após o request, mesmo
+    se uma exceção não-tratada ocorra."""
     db = SessionLocal()
     try:
         yield db
@@ -29,7 +30,30 @@ def get_db():
         db.close()
 
 # ---------------------------------------------------------------------------
-# Alert registration endpoints
+# Bus tracking endpoints
+# ---------------------------------------------------------------------------
+
+@app.get("/buses/{line}")
+async def get_buses(
+    line: str,
+    stop_lat: float | None = None,
+    stop_lon: float | None = None,
+):
+    """Retorna todos os ônibus de dada linha. 
+
+    Se stop_lat e stop_lon (coordenadas de um ponto) são providenciadas, 
+    retorna junto de cada ônibus o ETA em minutos e a distância até dado ponto 
+    (eta_minutes & eta_distance_km)
+
+    Example:
+      GET /buses/485
+      GET /buses/485?stop_lat=-22.9068&stop_lon=-43.1729
+    """
+    buses = await fetch_buses_by_line(line, stop_lat, stop_lon)
+    return {"line": line, "count": len(buses), "buses": buses}
+
+# ---------------------------------------------------------------------------
+# Registration endpoints
 # ---------------------------------------------------------------------------
 
 @app.post("/registrations", response_model=schemas.AlertRegistrationRead, status_code=201)
@@ -44,7 +68,7 @@ def create_registration(
     db_reg = models.AlertRegistration(**data)
     db.add(db_reg)
     db.commit()
-    db.refresh(db_reg)  # reload from DB to get the auto-assigned id
+    db.refresh(db_reg) 
     return db_reg
 
 
