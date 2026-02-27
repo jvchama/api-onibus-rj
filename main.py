@@ -3,12 +3,8 @@ from sqlalchemy.orm import Session
 
 import models
 import schemas
-from database import engine, SessionLocal, Base
+from database import SessionLocal, Base
 from bus_service import fetch_buses_by_line
-
-# Create tables that don't exist yet. In production you'd use Alembic
-# migrations instead, but this is a safe fallback for development.
-Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="Maravi Bus Alert API",

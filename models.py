@@ -5,11 +5,11 @@ from database import Base
 
 
 class AlertRegistration(Base):
-    """SQLAlchemy ORM model — represents a row in the alert_registrations table.
+    """SQLAlchemy ORM model — representa uma linha na tabela "alert_registration".
 
-    Note: window_start / window_end are stored as plain strings ("HH:MM:SS")
-    because SQLite has no native TIME type. They are converted back to
-    datetime.time by Pydantic when the API reads them.
+    NTS: window_start / window_end são armazenadas como strings; SQLite não tem
+    datetime type. Sào convertidas quando Pydantic lê a API.
+
     """
     __tablename__ = "alert_registrations"
 

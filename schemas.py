@@ -21,8 +21,8 @@ class AlertRegistrationCreate(BaseModel):
 class AlertRegistrationRead(AlertRegistrationCreate):
     """Schema para respostas - mesmos campos que Create + o id atibuído pela DB.
 
-    model_config from_attributes=True tells Pydantic it can read values from
-    ORM object attributes (e.g. row.email) instead of dict keys.
+    model_config from_attributes=True comunica ao Pydantic  que consegue ler valores
+    de atributos de objetos ORM ao invés de dict keys. 
     """
     id: int
 
