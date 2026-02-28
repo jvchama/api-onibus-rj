@@ -1,4 +1,4 @@
-from sqlalchemy import Integer, String, Float
+from sqlalchemy import Integer, String, Float, Date
 from sqlalchemy.orm import Mapped, mapped_column
 
 from database import Base
@@ -20,3 +20,4 @@ class AlertRegistration(Base):
     stop_lon: Mapped[float] = mapped_column(Float, nullable=False)
     window_start: Mapped[str] = mapped_column(String, nullable=False)  # "HH:MM:SS"
     window_end: Mapped[str] = mapped_column(String, nullable=False)    # "HH:MM:SS"
+    last_alerted_date: Mapped[str | None] = mapped_column(String, nullable=True, default=None)  # "YYYY-MM-DD" ou None

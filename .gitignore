@@ -1,0 +1,21 @@
+# Secrets — nunca commitar
+.env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Banco de dados local
+*.db
+
+# Celery
+celerybeat-schedule
+
+#textfiles
+project_maravi_ps
+day2day/
+
+# IDEs
+.vscode/
+.idea/

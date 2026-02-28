@@ -1,5 +1,8 @@
 import json
 
+from dotenv import load_dotenv
+load_dotenv()
+
 from fastapi import FastAPI, HTTPException, Depends
 from sqlalchemy.orm import Session
 import redis
@@ -13,9 +16,7 @@ from utils import haversine_km, estimate_eta_minutes
 redis_client = redis.Redis(host="localhost", port=6379, db=0)
 CACHE_KEY = "buses:snapshot"
 
-# DEV REMINDER: GET /buses/{line} reads from Redis cache. If the response is
-# slow or returns stale data, the Celery worker is probably not running.
-# Full dev setup requires three terminals:
+# Reminder to self: full dev setup requires three terminals:
 #   Terminal 1 (Redis):  docker compose up -d
 #   Terminal 2 (Worker): uv run celery -A celery_app worker --beat --loglevel=info
 #   Terminal 3 (API):    uv run uvicorn main:app --reload

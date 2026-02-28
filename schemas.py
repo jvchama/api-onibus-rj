@@ -25,5 +25,6 @@ class AlertRegistrationRead(AlertRegistrationCreate):
     de atributos de objetos ORM ao invés de dict keys. 
     """
     id: int
+    last_alerted_date: str | None = None
 
     model_config = {"from_attributes": True}

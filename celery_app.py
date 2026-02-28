@@ -1,3 +1,6 @@
+from dotenv import load_dotenv
+load_dotenv()  # carrega o .env antes de inicializar o Celery (worker não passa pelo main.py)
+
 from celery import Celery
 
 #NÃO NOMEIE celery.py
