@@ -12,6 +12,20 @@ LAG_MINUTES = 2
 WINDOW_MINUTES = 3  # how far back to look beyond the lag
 
 
+def _deduplicate_buses(buses: list[dict]) -> list[dict]:
+    """Keep only the most recent ping per physical bus (by ordem).
+
+    The API returns one record per GPS ping — within a 3-minute window the
+    same bus can appear 5-8 times. We only care about its latest position.
+    """
+    latest: dict[str, dict] = {}
+    for bus in buses:
+        ordem = bus["ordem"]
+        if ordem not in latest or bus["datahora"] > latest[ordem]["datahora"]:
+            latest[ordem] = bus
+    return list(latest.values())
+
+
 def _parse_bus(raw: dict) -> dict:
     """Limpa a API, convertando os dados brutos em tipos limpos"""
     return {
@@ -22,6 +36,25 @@ def _parse_bus(raw: dict) -> dict:
         "velocidade": int(raw["velocidade"]),
         "datahora": datetime.fromtimestamp(int(raw["datahora"]) / 1000).isoformat(),
     }
+
+
+def fetch_all_buses_sync() -> list[dict]:
+    """Fetch síncrono de TODOS os ônibus de TODAS as linhas — (Celery Worker)
+
+    Retorna todos os registros parseados da janela atual, sem filtro por linha.
+    O worker armazena esse snapshot completo no Redis; o filtro por linha acontece
+    no momento da leitura no endpoint da API.
+    """
+    now = datetime.now()
+    data_final = (now - timedelta(minutes=LAG_MINUTES)).strftime("%Y-%m-%d %H:%M:%S")
+    data_inicial = (now - timedelta(minutes=LAG_MINUTES + WINDOW_MINUTES)).strftime(
+        "%Y-%m-%d %H:%M:%S"
+    )
+    params = {"dataInicial": data_inicial, "dataFinal": data_final}
+
+    response = httpx.get(API_BASE, params=params, timeout=15.0)
+    response.raise_for_status()
+    return _deduplicate_buses([_parse_bus(b) for b in response.json()])
 
 
 async def fetch_buses_by_line(
@@ -51,7 +84,7 @@ async def fetch_buses_by_line(
         response.raise_for_status()
         raw_buses = response.json()
 
-    buses = [_parse_bus(b) for b in raw_buses if b["linha"] == line]
+    buses = _deduplicate_buses([_parse_bus(b) for b in raw_buses if b["linha"] == line])
 
     # adiciona distância e ETA dadas lat/lon
     if stop_lat is not None and stop_lon is not None:

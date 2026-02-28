@@ -1,10 +1,25 @@
+import json
+
 from fastapi import FastAPI, HTTPException, Depends
 from sqlalchemy.orm import Session
+import redis
 
 import models
 import schemas
 from database import SessionLocal, Base
 from bus_service import fetch_buses_by_line
+from utils import haversine_km, estimate_eta_minutes
+
+redis_client = redis.Redis(host="localhost", port=6379, db=0)
+CACHE_KEY = "buses:snapshot"
+
+# DEV REMINDER: GET /buses/{line} reads from Redis cache. If the response is
+# slow or returns stale data, the Celery worker is probably not running.
+# Full dev setup requires three terminals:
+#   Terminal 1 (Redis):  docker compose up -d
+#   Terminal 2 (Worker): uv run celery -A celery_app worker --beat --loglevel=info
+#   Terminal 3 (API):    uv run uvicorn main:app --reload
+# On Day 10 this becomes a Docker Compose service and starts automatically.
 
 app = FastAPI(
     title="Maravi Bus Alert API",
@@ -41,11 +56,25 @@ async def get_buses(
     retorna junto de cada ônibus o ETA em minutos e a distância até dado ponto 
     (eta_minutes & eta_distance_km)
 
-    Example:
+    Ex:
       GET /buses/485
       GET /buses/485?stop_lat=-22.9068&stop_lon=-43.1729
     """
-    buses = await fetch_buses_by_line(line, stop_lat, stop_lon)
+    raw = redis_client.get(CACHE_KEY)
+
+    if raw is None:
+        # Cache miss: worker não está rodando ou Redis está down.
+        # Cai para uma chamada direta da API para manter a aplicação no ar.
+        buses = await fetch_buses_by_line(line, stop_lat, stop_lon)
+    else:
+        all_buses = json.loads(raw)
+        buses = [b for b in all_buses if b["linha"] == line]
+        if stop_lat is not None and stop_lon is not None:
+            for bus in buses:
+                dist = haversine_km(bus["latitude"], bus["longitude"], stop_lat, stop_lon)
+                bus["distance_km"] = round(dist, 3)
+                bus["eta_minutes"] = estimate_eta_minutes(dist, bus["velocidade"])
+
     return {"line": line, "count": len(buses), "buses": buses}
 
 # ---------------------------------------------------------------------------
