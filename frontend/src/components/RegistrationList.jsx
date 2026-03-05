@@ -61,8 +61,7 @@ function RegistrationList({ onRefresh }) {
             <th>ID</th>
             <th>Email</th>
             <th>Linha</th>
-            <th>Lat. parada</th>
-            <th>Lon. parada</th>
+            <th>Parada</th>
             <th>Janela</th>
             <th></th>
           </tr>
@@ -73,8 +72,8 @@ function RegistrationList({ onRefresh }) {
               <td>{r.id}</td>
               <td>{r.email}</td>
               <td>{r.bus_line}</td>
-              <td>{r.stop_lat}</td>
-              <td>{r.stop_lon}</td>
+              {/* stop_name exibido quando disponível; fallback para coordenadas em registros antigos */}
+              <td>{r.stop_name ?? `${r.stop_lat}, ${r.stop_lon}`}</td>
               <td>{r.window_start} – {r.window_end}</td>
               <td>
                 <button

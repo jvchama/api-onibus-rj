@@ -5,6 +5,7 @@ class AlertRegistrationCreate(BaseModel):
     """Schema para POST /registrations — o que o cliente recebe."""
     email: str
     bus_line: str
+    stop_name: str | None = None
     stop_lat: float
     stop_lon: float
     window_start: time

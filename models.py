@@ -18,6 +18,7 @@ class AlertRegistration(Base):
     bus_line: Mapped[str] = mapped_column(String, nullable=False, index=True)
     stop_lat: Mapped[float] = mapped_column(Float, nullable=False)
     stop_lon: Mapped[float] = mapped_column(Float, nullable=False)
+    stop_name: Mapped[str | None] = mapped_column(String, nullable=True, default=None)  # endereço legível, ex: "Av. das Américas, 1000"
     window_start: Mapped[str] = mapped_column(String, nullable=False)  # "HH:MM:SS"
     window_end: Mapped[str] = mapped_column(String, nullable=False)    # "HH:MM:SS"
     last_alerted_date: Mapped[str | None] = mapped_column(String, nullable=True, default=None)  # "YYYY-MM-DD" ou None

@@ -1,8 +1,13 @@
+import asyncio
 import httpx
 from datetime import datetime, timedelta
 from fastapi import HTTPException
 
-from utils import haversine_km, estimate_eta_minutes
+from utils import haversine_km, get_ors_eta_sync
+
+# Número de ônibus mais próximos que recebem ETA via ORS.
+# Os demais ficam com eta_minutes=None para não gastar cota da API.
+ORS_TOP_N = 3
 
 API_BASE = "https://dados.mobilidade.rio/gps/sppo"
 
@@ -57,6 +62,40 @@ def fetch_all_buses_sync() -> list[dict]:
     return _deduplicate_buses([_parse_bus(b) for b in response.json()])
 
 
+async def apply_ors_eta(
+    buses: list[dict],
+    stop_lat: float,
+    stop_lon: float,
+) -> None:
+    """Aplica ETA via ORS para os ORS_TOP_N ônibus mais próximos.
+
+    Modifica a lista in-place. Pressupõe que bus["distance_km"] (haversine)
+    já esteja preenchido — usa esse valor como critério de seleção dos candidatos.
+
+    Para ônibus além do top N, define eta_minutes=None: melhor não mostrar ETA
+    do que mostrar um valor enganoso baseado em linha reta.
+
+    get_ors_eta_sync é bloqueante — usamos asyncio.to_thread para não travar
+    o event loop do FastAPI.
+    """
+    buses.sort(key=lambda b: b["distance_km"])
+
+    for bus in buses[:ORS_TOP_N]:
+        result = await asyncio.to_thread(
+            get_ors_eta_sync,
+            bus["latitude"], bus["longitude"],
+            stop_lat, stop_lon,
+        )
+        if result:
+            bus["eta_minutes"] = result["eta_minutes"]
+            bus["distance_km"] = result["distance_km"]  # distância por rua (mais precisa)
+        else:
+            bus["eta_minutes"] = None  # ORS falhou → não exibe ETA falso
+
+    for bus in buses[ORS_TOP_N:]:
+        bus["eta_minutes"] = None
+
+
 async def fetch_buses_by_line(
     line: str,
     stop_lat: float | None = None,
@@ -86,11 +125,11 @@ async def fetch_buses_by_line(
 
     buses = _deduplicate_buses([_parse_bus(b) for b in raw_buses if b["linha"] == line])
 
-    # adiciona distância e ETA dadas lat/lon
+    # Adiciona distância haversine a todos os ônibus; ETA via ORS para os mais próximos
     if stop_lat is not None and stop_lon is not None:
         for bus in buses:
             dist = haversine_km(bus["latitude"], bus["longitude"], stop_lat, stop_lon)
             bus["distance_km"] = round(dist, 3)
-            bus["eta_minutes"] = estimate_eta_minutes(dist, bus["velocidade"])
+        await apply_ors_eta(buses, stop_lat, stop_lon)
 
     return buses

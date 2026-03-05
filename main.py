@@ -10,8 +10,8 @@ import redis
 import models
 import schemas
 from database import SessionLocal, Base
-from bus_service import fetch_buses_by_line
-from utils import haversine_km, estimate_eta_minutes
+from bus_service import fetch_buses_by_line, apply_ors_eta
+from utils import haversine_km
 
 redis_client = redis.Redis(host="localhost", port=6379, db=0)
 CACHE_KEY = "buses:snapshot"
@@ -74,7 +74,7 @@ async def get_buses(
             for bus in buses:
                 dist = haversine_km(bus["latitude"], bus["longitude"], stop_lat, stop_lon)
                 bus["distance_km"] = round(dist, 3)
-                bus["eta_minutes"] = estimate_eta_minutes(dist, bus["velocidade"])
+            await apply_ors_eta(buses, stop_lat, stop_lon)
 
     return {"line": line, "count": len(buses), "buses": buses}
 

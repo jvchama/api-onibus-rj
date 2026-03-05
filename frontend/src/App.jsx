@@ -11,8 +11,8 @@ function App() {
     <BrowserRouter>
       <Navbar />
       <Routes>
-        {/* Redireciona raiz para /register */}
-        <Route path="/" element={<Navigate to="/register" replace />} />
+        {/* Redireciona raiz para /track — página principal */}
+        <Route path="/" element={<Navigate to="/track" replace />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/track" element={<TrackPage />} />
       </Routes>
