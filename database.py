@@ -1,14 +1,18 @@
+import os
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, DeclarativeBase
 
-SQLALCHEMY_DATABASE_URL = "sqlite:///./riobus.db"
+SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./riobus.db")
 
-# connect_args is SQLite-specific: it allows the same connection to be used
-# across threads, which FastAPI needs (it runs handlers in a thread pool).
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL,
-    connect_args={"check_same_thread": False},
+# connect_args é específico do SQLite: permite reusar a mesma conexão entre
+# threads, necessário no FastAPI (thread pool). Ignorado para outros bancos.
+connect_args = (
+    {"check_same_thread": False}
+    if SQLALCHEMY_DATABASE_URL.startswith("sqlite")
+    else {}
 )
+engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args=connect_args)
 
 # Each request gets its own session from this factory.
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

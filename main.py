@@ -1,4 +1,5 @@
 import json
+import os
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -12,8 +13,9 @@ import schemas
 from database import SessionLocal, Base
 from bus_service import fetch_buses_by_line, apply_ors_eta
 from utils import haversine_km
+from auth import require_api_key, require_admin_key
 
-redis_client = redis.Redis(host="localhost", port=6379, db=0)
+redis_client = redis.from_url(os.getenv("REDIS_URL", "redis://localhost:6379/0"))
 CACHE_KEY = "buses:snapshot"
 
 # Reminder to self: full dev setup requires three terminals:
@@ -82,7 +84,8 @@ async def get_buses(
 # Registration endpoints
 # ---------------------------------------------------------------------------
 
-@app.post("/registrations", response_model=schemas.AlertRegistrationRead, status_code=201)
+@app.post("/registrations", response_model=schemas.AlertRegistrationRead, status_code=201,
+          dependencies=[Depends(require_api_key)])
 def create_registration(
     registration: schemas.AlertRegistrationCreate,
     db: Session = Depends(get_db),
@@ -98,11 +101,13 @@ def create_registration(
     return db_reg
 
 
-@app.get("/registrations", response_model=list[schemas.AlertRegistrationRead])
+@app.get("/registrations", response_model=list[schemas.AlertRegistrationRead],
+         dependencies=[Depends(require_admin_key)])
 def list_registrations(db: Session = Depends(get_db)):
     return db.query(models.AlertRegistration).all()
 
-@app.delete("/registrations/{registration_id}", status_code=204)
+@app.delete("/registrations/{registration_id}", status_code=204,
+            dependencies=[Depends(require_api_key)])
 def delete_registration(registration_id: int, db: Session = Depends(get_db)):
     reg = db.get(models.AlertRegistration, registration_id)
     if reg is None:

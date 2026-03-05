@@ -30,7 +30,10 @@ function RegistrationList({ onRefresh }) {
   async function handleDelete(id) {
     setDeletingId(id)
     try {
-      await fetch(`/registrations/${id}`, { method: 'DELETE' })
+      await fetch(`/registrations/${id}`, {
+        method: 'DELETE',
+        headers: { 'X-API-Key': import.meta.env.VITE_API_KEY ?? '' },
+      })
       // Remove da lista local sem precisar de outro GET
       setRegistrations(prev => prev.filter(r => r.id !== id))
     } catch {

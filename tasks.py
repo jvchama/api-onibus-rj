@@ -1,4 +1,5 @@
 import json
+import os
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
@@ -12,7 +13,7 @@ from email_service import send_bus_alert
 from models import AlertRegistration
 from utils import get_ors_eta_sync, haversine_km
 
-redis_client = redis.Redis(host="localhost", port=6379, db=0)
+redis_client = redis.from_url(os.getenv("REDIS_URL", "redis://localhost:6379/0"))
 
 CACHE_KEY = "buses:snapshot"
 CACHE_TTL = 300  # sec — snapshot expira após 5min se worker parar
