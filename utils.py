@@ -59,9 +59,12 @@ def get_ors_eta_sync(
         coords = ((bus_lon, bus_lat), (stop_lon, stop_lat))
         routes = client.directions(coords, profile="driving-car")
         summary = routes["routes"][0]["summary"]
+        # ORS retorna summary vazio ({}) quando origem == destino (ônibus no ponto)
+        duration = summary.get("duration", 0)
+        distance = summary.get("distance", 0)
         return {
-            "eta_minutes": round(summary["duration"] / 60, 1),
-            "distance_km": round(summary["distance"] / 1000, 3),
+            "eta_minutes": round(duration / 60, 1),
+            "distance_km": round(distance / 1000, 3),
         }
     except Exception as e:
         print(f"[ORS] Falha na chamada: {e}")

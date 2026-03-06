@@ -11,7 +11,7 @@ from bus_service import fetch_all_buses_sync
 from database import SessionLocal
 from email_service import send_bus_alert
 from models import AlertRegistration
-from utils import get_ors_eta_sync, haversine_km
+from utils import get_ors_eta_sync, haversine_km, estimate_eta_minutes
 
 redis_client = redis.from_url(os.getenv("REDIS_URL", "redis://localhost:6379/0"))
 
@@ -105,8 +105,13 @@ def check_alerts(buses: list[dict]) -> None:
                     stop_lat=reg.stop_lat,
                     stop_lon=reg.stop_lon,
                 )
+                # Fallback: se ORS falhou, estima ETA por haversine + velocidade
                 if result is None:
-                    continue
+                    dist = haversine_km(bus["latitude"], bus["longitude"], reg.stop_lat, reg.stop_lon)
+                    eta = estimate_eta_minutes(dist, bus["velocidade"])
+                    if eta is None:
+                        continue
+                    result = {"eta_minutes": eta, "distance_km": dist}
 
                 if result["eta_minutes"] <= ETA_THRESHOLD_MINUTES:
                     sent = send_bus_alert(

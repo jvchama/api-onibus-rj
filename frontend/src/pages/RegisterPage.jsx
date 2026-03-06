@@ -1,9 +1,6 @@
 // RegisterPage.jsx — formulário para cadastrar alertas de proximidade.
-// Após POST bem-sucedido, incrementa `refreshKey` para forçar o
-// RegistrationList a rebuscar a lista atualizada.
 
 import { useState } from 'react'
-import RegistrationList from '../components/RegistrationList'
 
 // Estado inicial do formulário — centralizado para facilitar o reset
 const FORM_INICIAL = {
@@ -19,8 +16,6 @@ function RegisterPage() {
   const [form, setForm] = useState(FORM_INICIAL)
   const [enviando, setEnviando] = useState(false)
   const [msg, setMsg] = useState(null) // { tipo: 'success'|'error', texto: '...' }
-  const [refreshKey, setRefreshKey] = useState(0)
-
   // Estado do campo de endereço geocodificado
   const [enderecoInput, setEnderecoInput] = useState('')   // o que o usuário digita
   const [buscando, setBuscando] = useState(false)          // loading do Nominatim
@@ -127,8 +122,6 @@ function RegisterPage() {
         setForm(FORM_INICIAL)
         setEnderecoInput('')
         setResolved(null)
-        // Incrementar a chave faz o useEffect do RegistrationList disparar de novo
-        setRefreshKey(k => k + 1)
       } else {
         const err = await res.json()
         setMsg({ tipo: 'error', texto: `Erro ${res.status}: ${JSON.stringify(err.detail)}` })
@@ -247,8 +240,6 @@ function RegisterPage() {
         )}
       </form>
 
-      <h2>Alertas cadastrados</h2>
-      <RegistrationList onRefresh={refreshKey} />
     </main>
   )
 }

@@ -4,7 +4,11 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 
+from pathlib import Path
+
 from fastapi import FastAPI, HTTPException, Depends
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 import redis
 
@@ -85,7 +89,7 @@ async def get_buses(
 # ---------------------------------------------------------------------------
 
 @app.post("/registrations", response_model=schemas.AlertRegistrationRead, status_code=201,
-          dependencies=[Depends(require_api_key)])
+           dependencies=[Depends(require_api_key)])
 def create_registration(
     registration: schemas.AlertRegistrationCreate,
     db: Session = Depends(get_db),
@@ -108,9 +112,33 @@ def list_registrations(db: Session = Depends(get_db)):
 
 @app.delete("/registrations/{registration_id}", status_code=204,
             dependencies=[Depends(require_api_key)])
-def delete_registration(registration_id: int, db: Session = Depends(get_db)):
+def delete_registration(
+    registration_id: int,
+    email: str,
+    db: Session = Depends(get_db),
+):
     reg = db.get(models.AlertRegistration, registration_id)
-    if reg is None:
-        raise HTTPException(status_code=404, detail=f"Registration {registration_id} not found")
+    # Retorna 404 tanto se o ID não existe quanto se o e-mail não bate —
+    # não revelar qual dos dois falhou evita enumeração de IDs.
+    if reg is None or reg.email != email:
+        raise HTTPException(status_code=404, detail="Registro não encontrado")
     db.delete(reg)
     db.commit()
+
+# ---------------------------------------------------------------------------
+# Frontend — servido pelo FastAPI em produção (Docker)
+# ---------------------------------------------------------------------------
+_DIST = Path("frontend/dist")
+
+if _DIST.is_dir():
+    # Assets compilados pelo Vite (JS, CSS, imagens) — servidos diretamente
+    app.mount("/assets", StaticFiles(directory=_DIST / "assets"), name="assets")
+
+    # Catch-all para o React Router: qualquer rota desconhecida recebe index.html.
+    # Rotas da API registradas acima têm prioridade e nunca chegam aqui.
+    @app.get("/{full_path:path}")
+    async def serve_spa(full_path: str):
+        file_path = _DIST / full_path
+        if file_path.is_file():
+            return FileResponse(file_path)
+        return FileResponse(_DIST / "index.html")

@@ -7,7 +7,7 @@
 import 'leaflet/dist/leaflet.css'
 
 import { useState, useEffect } from 'react'
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
 import L from 'leaflet'
 
 // Correção do ícone padrão do Leaflet no Vite:
@@ -43,11 +43,21 @@ const stopIcon = L.divIcon({
   iconAnchor: [8, 8],
 })
 
+// Componente interno que reage a flyTarget — chama map.flyTo() quando o alvo muda.
+function MapController({ flyTarget }) {
+  const map = useMap()
+  useEffect(() => {
+    if (flyTarget) map.flyTo(flyTarget, 16)
+  }, [flyTarget])
+  return null
+}
+
 function TrackPage() {
   const [form, setForm] = useState(FORM_INICIAL)
   const [searchParams, setSearchParams] = useState(null)
   const [buses, setBuses] = useState([])
   const [loading, setLoading] = useState(false)
+  const [flyTarget, setFlyTarget] = useState(null)
 
   // Estado do campo de endereço geocodificado
   const [enderecoInput, setEnderecoInput] = useState('')   // o que o usuário digita
@@ -135,6 +145,7 @@ function TrackPage() {
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
+          <MapController flyTarget={flyTarget} />
 
           {/* Marcador da parada do usuário */}
           {searchParams && (
@@ -236,7 +247,11 @@ function TrackPage() {
                     </thead>
                     <tbody>
                       {buses.map(bus => (
-                        <tr key={bus.ordem}>
+                        <tr
+                          key={bus.ordem}
+                          style={{ cursor: bus.latitude ? 'pointer' : 'default' }}
+                          onClick={() => bus.latitude && bus.longitude && setFlyTarget([bus.latitude, bus.longitude])}
+                        >
                           <td>{bus.ordem}</td>
                           <td>{bus.distance_km ?? '—'}</td>
                           <td>{bus.velocidade ?? '—'}</td>

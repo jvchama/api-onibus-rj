@@ -3,7 +3,7 @@ import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, DeclarativeBase
 
-SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./riobus.db")
+SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./data/riobus.db")
 
 # connect_args é específico do SQLite: permite reusar a mesma conexão entre
 # threads, necessário no FastAPI (thread pool). Ignorado para outros bancos.

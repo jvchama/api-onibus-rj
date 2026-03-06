@@ -1,11 +1,46 @@
-services: 
-  redis: 
-    image: redis
-    ports: 
+services:
+
+  redis:
+    image: redis:7-alpine
+    ports:
       - "6379:6379"
-  redis-commander: 
+
+  redis-commander:
     image: rediscommander/redis-commander
-    ports: 
+    ports:
       - "8081:8081"
-    environment: 
+    environment:
       - REDIS_HOSTS=local:redis:6379
+    depends_on:
+      - redis
+
+  api:
+    build:
+      context: .
+      args:
+        VITE_API_KEY: ${VITE_API_KEY}
+    ports:
+      - "8000:8000"
+    env_file: .env
+    volumes:
+      - db-data:/app/data
+    depends_on:
+      - redis
+
+  worker:
+    build:
+      context: .
+      args:
+        VITE_API_KEY: ${VITE_API_KEY}
+    command: sh -c "mkdir -p data && alembic upgrade head && celery -A celery_app worker --beat --loglevel=info"
+    env_file: .env
+    volumes:
+      - db-data:/app/data
+    depends_on:
+      - redis
+
+# Volume nomeado para persistir o riobus.db entre restarts.
+# Montado em /app/data (não em /app) para não sobrepor o código da imagem.
+# api e worker compartilham o mesmo volume para acessar o mesmo banco.
+volumes:
+  db-data:

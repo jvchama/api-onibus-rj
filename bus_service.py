@@ -1,9 +1,10 @@
 import asyncio
 import httpx
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 from fastapi import HTTPException
 
-from utils import haversine_km, get_ors_eta_sync
+from utils import haversine_km, get_ors_eta_sync, estimate_eta_minutes
 
 # Número de ônibus mais próximos que recebem ETA via ORS.
 # Os demais ficam com eta_minutes=None para não gastar cota da API.
@@ -50,7 +51,9 @@ def fetch_all_buses_sync() -> list[dict]:
     O worker armazena esse snapshot completo no Redis; o filtro por linha acontece
     no momento da leitura no endpoint da API.
     """
-    now = datetime.now()
+    # datetime.now() retorna UTC dentro do container Docker — a API do Rio espera BRT (UTC-3)
+    # now = datetime.now()
+    now = datetime.now(ZoneInfo("America/Sao_Paulo"))
     data_final = (now - timedelta(minutes=LAG_MINUTES)).strftime("%Y-%m-%d %H:%M:%S")
     data_inicial = (now - timedelta(minutes=LAG_MINUTES + WINDOW_MINUTES)).strftime(
         "%Y-%m-%d %H:%M:%S"
@@ -90,10 +93,12 @@ async def apply_ors_eta(
             bus["eta_minutes"] = result["eta_minutes"]
             bus["distance_km"] = result["distance_km"]  # distância por rua (mais precisa)
         else:
-            bus["eta_minutes"] = None  # ORS falhou → não exibe ETA falso
+            # ORS indisponível ou sem chave — fallback: haversine ÷ velocidade atual
+            bus["eta_minutes"] = estimate_eta_minutes(bus["distance_km"], bus["velocidade"])
 
     for bus in buses[ORS_TOP_N:]:
-        bus["eta_minutes"] = None
+        # Além do top 3, ORS não é chamada — usa estimativa rápida para todos
+        bus["eta_minutes"] = estimate_eta_minutes(bus["distance_km"], bus["velocidade"])
 
 
 async def fetch_buses_by_line(
@@ -110,7 +115,8 @@ async def fetch_buses_by_line(
     API retorna todos os ônibus de todas as linhas para uma janela - filtro por 
     linha após o fetch. 
     """
-    now = datetime.now()
+    # now = datetime.now()
+    now = datetime.now(ZoneInfo("America/Sao_Paulo"))
     data_final = (now - timedelta(minutes=LAG_MINUTES)).strftime("%Y-%m-%d %H:%M:%S")
     data_inicial = (now - timedelta(minutes=LAG_MINUTES + WINDOW_MINUTES)).strftime(
         "%Y-%m-%d %H:%M:%S"
