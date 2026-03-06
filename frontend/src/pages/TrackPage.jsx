@@ -1,18 +1,13 @@
 // TrackPage.jsx — layout split: mapa à esquerda (60%), painel à direita (40%).
 // O mapa fica sempre visível. Após o primeiro submit, marcadores dos ônibus
 // e o marcador da parada do usuário aparecem sobre ele.
-//
-// IMPORTANTE: o import do CSS do Leaflet precisa vir antes dos componentes
-// do react-leaflet. Sem ele, o MapContainer renderiza com altura 0.
+
 import 'leaflet/dist/leaflet.css'
 
 import { useState, useEffect } from 'react'
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
 import L from 'leaflet'
 
-// Correção do ícone padrão do Leaflet no Vite:
-// o bundler não resolve os caminhos internos de _getIconUrl automaticamente,
-// então deletamos o método e informamos os caminhos manualmente.
 import iconUrl from 'leaflet/dist/images/marker-icon.png'
 import iconRetinaUrl from 'leaflet/dist/images/marker-icon-2x.png'
 import shadowUrl from 'leaflet/dist/images/marker-shadow.png'
@@ -25,11 +20,8 @@ const FORM_INICIAL = { line: '' }
 
 const MENSAGENS = {
   line: 'Informe a linha do ônibus (ex: 485)',
-  // stop_lat e stop_lon removidos — coordenadas preenchidas automaticamente pelo geocoding
 }
 
-// Ícone customizado para a parada do usuário — círculo vermelho via divIcon,
-// evitando dependência de arquivos de imagem extras.
 const stopIcon = L.divIcon({
   className: '',
   html: `<div style="
@@ -78,8 +70,7 @@ function TrackPage() {
     e.target.setCustomValidity('')
   }
 
-  // Geocodifica o endereço digitado via Nominatim (OpenStreetMap, gratuito, sem chave).
-  // Limita ao Brasil (countrycodes=br) e pega apenas o primeiro resultado.
+  // Geocodifica o endereço digitado via Nominatim 
   async function buscarEndereco() {
     setBuscando(true)
     setResolved(null)
@@ -118,7 +109,6 @@ function TrackPage() {
 
   function handleSubmit(e) {
     e.preventDefault()
-    // resolved garante que o endereço foi geocodificado antes de buscar
     setSearchParams({
       line: form.line,
       stop_lat: parseFloat(resolved.lat),

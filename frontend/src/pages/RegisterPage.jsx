@@ -15,8 +15,7 @@ const FORM_INICIAL = {
 function RegisterPage() {
   const [form, setForm] = useState(FORM_INICIAL)
   const [enviando, setEnviando] = useState(false)
-  const [msg, setMsg] = useState(null) // { tipo: 'success'|'error', texto: '...' }
-  // Estado do campo de endereço geocodificado
+  const [msg, setMsg] = useState(null) 
   const [enderecoInput, setEnderecoInput] = useState('')   // o que o usuário digita
   const [buscando, setBuscando] = useState(false)          // loading do Nominatim
   const [resolved, setResolved] = useState(null)           // { lat, lon, display_name }
@@ -26,12 +25,9 @@ function RegisterPage() {
     setForm(prev => ({ ...prev, [name]: value }))
   }
 
-  // Mensagens de validação nativa substituídas por PT-BR.
-  // O browser usa o idioma do sistema por padrão; onInvalid sobrescreve isso.
   const MENSAGENS = {
     email:        'Insira um email válido (ex: voce@email.com)',
     bus_line:     'Informe a linha do ônibus (ex: 485)',
-    // stop_lat e stop_lon removidos — preenchidos automaticamente pelo geocoding
     window_start: 'Informe o horário de início (ex: 07:00)',
     window_end:   'Informe o horário de fim (ex: 08:00)',
   }
@@ -40,16 +36,13 @@ function RegisterPage() {
     e.target.setCustomValidity(MENSAGENS[e.target.name] ?? 'Campo inválido')
   }
 
-  // Limpa a mensagem customizada ao primeiro input após erro —
-  // sem isso o campo permanece inválido mesmo depois de corrigido.
+  // Limpa a mensagem customizada ao primeiro input após erro
   function handleClearValidity(e) {
     e.target.setCustomValidity('')
   }
 
-  // Máscara em tempo real para campos de horário.
   // Extrai apenas dígitos do que o usuário digitou, limita a 4 (HHMM),
   // e insere o ":" fixo após os dois primeiros — o campo sempre exibe HH:MM.
-  // Backspace funciona normalmente: apagar o "0" de "09:0" resulta em "09".
   function handleTimeChange(e) {
     const { name, value } = e.target
     const digits = value.replace(/\D/g, '').slice(0, 4)
@@ -59,8 +52,7 @@ function RegisterPage() {
     setForm(prev => ({ ...prev, [name]: formatted }))
   }
 
-  // Geocodifica o endereço digitado via Nominatim (OpenStreetMap, gratuito, sem chave).
-  // Limita ao Brasil (countrycodes=br) e pega apenas o primeiro resultado.
+  // Geocodifica o endereço digitado via Nominatim 
   async function buscarEndereco() {
     setBuscando(true)
     setResolved(null)

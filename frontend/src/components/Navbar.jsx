@@ -7,7 +7,7 @@ import { NavLink } from 'react-router-dom'
 function Navbar() {
   return (
     <nav className="navbar">
-      <span className="navbar-brand">RioBus</span>
+      <span className="navbar-brand">BusCarioca</span>
       <NavLink to="/track">Rastrear Ônibus</NavLink>
       <NavLink to="/register">Cadastrar Alerta</NavLink>
     </nav>

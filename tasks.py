@@ -25,7 +25,6 @@ HAVERSINE_PREFILTER_KM = 8.0
 
 SP_TZ = ZoneInfo("America/Sao_Paulo")
 
-
 @celery_app.task(bind=True, max_retries=3)
 def fetch_and_cache_buses(self):
     """Dá fetch em todas as posições de ônibus da API e armazena-as no cache no Redis.

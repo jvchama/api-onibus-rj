@@ -52,36 +52,55 @@ Serviços disponíveis após o boot:
 
 Os dados do banco persistem entre restarts via volume Docker (`db-data`).
 
-## Rodar em modo desenvolvimento
+## Rodar em modo desenvolvimento (Windows)
 
-Requer três terminais simultâneos:
+### Pré-requisitos
 
-```bash
-# Terminal 1 — Redis
+- [Python 3.12+](https://www.python.org/downloads/) (marque "Add to PATH" no instalador)
+- [Node.js 18+](https://nodejs.org/)
+- [Docker Desktop for Windows](https://www.docker.com/products/docker-desktop/) (necessário para o Redis)
+- [uv](https://docs.astral.sh/uv/) — instale via PowerShell:
+  ```powershell
+  powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+  ```
+
+### Passo a passo
+
+Abra três terminais (PowerShell ou Windows Terminal):
+
+```powershell
+# Terminal 1 — Redis (via Docker Desktop)
 docker compose up redis -d
+```
 
-# Terminal 2 — Celery worker + beat scheduler
-uv run celery -A celery_app worker --beat --loglevel=info
+```powershell
+# Terminal 2 — Celery worker + beat
+# --pool=solo é necessário no Windows (Celery não suporta prefork nesse OS)
+uv run celery -A celery_app worker --beat --loglevel=info --pool=solo
+```
 
+```powershell
 # Terminal 3 — FastAPI
 uv run uvicorn main:app --reload
 ```
 
 Frontend (quarto terminal):
 
-```bash
+```powershell
 cd frontend
 # Crie frontend/.env.local com: VITE_API_KEY=<mesma chave que API_KEY no .env>
 npm install
 npm run dev   # http://localhost:5173 (proxy para o backend em :8000)
 ```
 
-Em modo dev o banco é criado em `./data/riobus.db`. Execute as migrações na primeira vez:
+Migrações do banco (primeira vez):
 
-```bash
-mkdir -p data
+```powershell
+mkdir data
 uv run alembic upgrade head
 ```
+
+> **Dica:** se `uv run celery` falhar com erro de permissão, execute o terminal como Administrador ou verifique se o caminho do `uv` está no PATH do sistema.
 
 ## Variáveis de ambiente
 
