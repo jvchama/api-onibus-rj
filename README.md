@@ -52,7 +52,7 @@ Serviços disponíveis após o boot:
 
 Os dados do banco persistem entre restarts via volume Docker (`db-data`).
 
-## Rodar em modo desenvolvimento (Windows)
+## Rodar em modo desenvolvimento
 
 ### Pré-requisitos
 
