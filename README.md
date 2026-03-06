@@ -1,4 +1,4 @@
-# Maravi — Alertas de Ônibus Rio de Janeiro
+# BusCarioca — Alertas de Ônibus Rio de Janeiro
 
 Aplicação web que monitora a posição GPS dos ônibus do Rio de Janeiro em tempo real e envia alertas por e-mail quando um ônibus da linha cadastrada está chegando à parada do usuário.
 
