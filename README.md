@@ -1,4 +1,4 @@
-# Maravi — Alertas de Ônibus Rio de Janeiro
+# BusCarioca — Alertas de Ônibus Rio de Janeiro
 
 Aplicação web que monitora a posição GPS dos ônibus do Rio de Janeiro em tempo real e envia alertas por e-mail quando um ônibus da linha cadastrada está chegando à parada do usuário.
 
@@ -52,55 +52,36 @@ Serviços disponíveis após o boot:
 
 Os dados do banco persistem entre restarts via volume Docker (`db-data`).
 
-## Rodar em modo desenvolvimento (Windows)
+## Rodar em modo desenvolvimento
 
-### Pré-requisitos
+Requer três terminais simultâneos:
 
-- [Python 3.12+](https://www.python.org/downloads/) (marque "Add to PATH" no instalador)
-- [Node.js 18+](https://nodejs.org/)
-- [Docker Desktop for Windows](https://www.docker.com/products/docker-desktop/) (necessário para o Redis)
-- [uv](https://docs.astral.sh/uv/) — instale via PowerShell:
-  ```powershell
-  powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
-  ```
-
-### Passo a passo
-
-Abra três terminais (PowerShell ou Windows Terminal):
-
-```powershell
-# Terminal 1 — Redis (via Docker Desktop)
+```bash
+# Terminal 1 — Redis
 docker compose up redis -d
-```
 
-```powershell
-# Terminal 2 — Celery worker + beat
-# --pool=solo é necessário no Windows (Celery não suporta prefork nesse OS)
-uv run celery -A celery_app worker --beat --loglevel=info --pool=solo
-```
+# Terminal 2 — Celery worker + beat scheduler
+uv run celery -A celery_app worker --beat --loglevel=info
 
-```powershell
 # Terminal 3 — FastAPI
 uv run uvicorn main:app --reload
 ```
 
 Frontend (quarto terminal):
 
-```powershell
+```bash
 cd frontend
 # Crie frontend/.env.local com: VITE_API_KEY=<mesma chave que API_KEY no .env>
 npm install
 npm run dev   # http://localhost:5173 (proxy para o backend em :8000)
 ```
 
-Migrações do banco (primeira vez):
+Em modo dev o banco é criado em `./data/riobus.db`. Execute as migrações na primeira vez:
 
-```powershell
-mkdir data
+```bash
+mkdir -p data
 uv run alembic upgrade head
 ```
-
-> **Dica:** se `uv run celery` falhar com erro de permissão, execute o terminal como Administrador ou verifique se o caminho do `uv` está no PATH do sistema.
 
 ## Variáveis de ambiente
 
