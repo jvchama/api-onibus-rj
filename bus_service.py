@@ -70,20 +70,19 @@ async def apply_ors_eta(
     stop_lat: float,
     stop_lon: float,
 ) -> None:
-    """Aplica ETA via ORS para os ORS_TOP_N ônibus mais próximos.
+    """Aplica ETA via ORS para todos os ônibus da lista.
 
     Modifica a lista in-place. Pressupõe que bus["distance_km"] (haversine)
-    já esteja preenchido — usa esse valor como critério de seleção dos candidatos.
+    já esteja preenchido.
 
-    Para ônibus além do top N, define eta_minutes=None: melhor não mostrar ETA
-    do que mostrar um valor enganoso baseado em linha reta.
+    Fallback para haversine/velocidade apenas quando a ORS está indisponível.
 
     get_ors_eta_sync é bloqueante — usamos asyncio.to_thread para não travar
     o event loop do FastAPI.
     """
     buses.sort(key=lambda b: b["distance_km"])
 
-    for bus in buses[:ORS_TOP_N]:
+    for bus in buses:
         result = await asyncio.to_thread(
             get_ors_eta_sync,
             bus["latitude"], bus["longitude"],
@@ -93,12 +92,8 @@ async def apply_ors_eta(
             bus["eta_minutes"] = result["eta_minutes"]
             bus["distance_km"] = result["distance_km"]  # distância por rua (mais precisa)
         else:
-            # ORS indisponível ou sem chave — fallback: haversine ÷ velocidade atual
+            # ORS indisponível — fallback: haversine ÷ velocidade atual
             bus["eta_minutes"] = estimate_eta_minutes(bus["distance_km"], bus["velocidade"])
-
-    for bus in buses[ORS_TOP_N:]:
-        # Além do top 3, ORS não é chamada — usa estimativa rápida para todos
-        bus["eta_minutes"] = estimate_eta_minutes(bus["distance_km"], bus["velocidade"])
 
 
 async def fetch_buses_by_line(

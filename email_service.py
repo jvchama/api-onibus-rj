@@ -35,14 +35,14 @@ def send_bus_alert(
         print("[email] SMTP_USER não configurado — e-mail não enviado.")
         return False
 
-    subject = f"[Maravi] Ônibus {bus_line} chegando em ~{eta_minutes} min"
+    subject = f"[BusCarioca] Ônibus {bus_line} chegando em ~{eta_minutes} min"
     body = (
         f"Olá!\n\n"
         f"O ônibus da linha {bus_line} (ordem: {bus_ordem}) está a aproximadamente "
         f"{eta_minutes} minutos da sua parada "
         f"(lat: {stop_lat}, lon: {stop_lon}).\n\n"
         f"Prepare-se para sair!\n\n"
-        f"— Rio Bus Alert"
+        f"— BusCarioca"
     )
 
     msg = MIMEMultipart()

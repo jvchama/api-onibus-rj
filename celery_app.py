@@ -20,7 +20,7 @@ celery_app = Celery(
 celery_app.conf.beat_schedule = {
     "fetch-buses-every-minute": {
         "task": "tasks.fetch_and_cache_buses",
-        "schedule": 60.0,  # seconds
+        "schedule": 60.0, 
     },
 }
 

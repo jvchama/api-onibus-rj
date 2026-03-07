@@ -253,7 +253,7 @@ function TrackPage() {
                   </table>
                 </div>
                 <small style={{ color: '#94a3b8' }}>
-                  Ônibus ordenados por distância. ETA calculado via rota real (ORS) para os {3} mais próximos; demais exibem —.
+                  Ônibus ordenados por distância. ETA calculado via rota real (ORS).
                 </small>
               </>
             )}
