@@ -128,7 +128,7 @@ function TrackPage() {
   return (
     <div className="track-layout">
 
-      {/* ── Lado esquerdo: mapa sempre visível ── */}
+      {/* ── Lado esquerdo: mapa ── */}
       <div className="track-map">
         <MapContainer center={CENTRO_RIO} zoom={13}>
           <TileLayer
@@ -181,7 +181,7 @@ function TrackPage() {
               required
             />
           </div>
-          {/* Endereço da parada — geocodificado via Nominatim; lat/lon resolvidos automaticamente */}
+          {/* Endereço da parada — geocodificado via Nominatim */}
           <div className="form-group">
             <label>Endereço da parada</label>
             <div style={{ display: 'flex', gap: '0.5rem' }}>

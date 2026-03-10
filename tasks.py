@@ -120,6 +120,7 @@ def check_alerts(buses: list[dict]) -> None:
                         eta_minutes=result["eta_minutes"],
                         stop_lat=reg.stop_lat,
                         stop_lon=reg.stop_lon,
+                        stop_name=reg.stop_name,
                     )
                     if sent:
                         reg.last_alerted_date = today_str

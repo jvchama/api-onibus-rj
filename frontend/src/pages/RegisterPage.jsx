@@ -92,7 +92,7 @@ function RegisterPage() {
     const toBackendTime = t => t.includes(':') && t.split(':').length === 2 ? `${t}:00` : t
     const payload = {
       ...form,
-      stop_name: resolved.display_name,
+      stop_name: enderecoInput,
       stop_lat: parseFloat(form.stop_lat),
       stop_lon: parseFloat(form.stop_lon),
       window_start: toBackendTime(form.window_start),
@@ -162,7 +162,7 @@ function RegisterPage() {
           />
         </div>
 
-        {/* Endereço da parada — geocodificado via Nominatim; lat/lon preenchidos automaticamente */}
+        {/* Endereço da parada — geocodificado via Nominatim */}
         <div className="form-group">
           <label>Endereço da parada</label>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -187,7 +187,7 @@ function RegisterPage() {
           )}
         </div>
 
-        {/* Janela de horário — máscara automática: o ":" é inserido após os 2 primeiros dígitos */}
+        {/* Janela de horário */}
         <div className="form-row">
           <div className="form-group">
             <label htmlFor="window_start">Início da janela (HH:MM)</label>

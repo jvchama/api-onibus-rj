@@ -25,6 +25,7 @@ def send_bus_alert(
     eta_minutes: float,
     stop_lat: float,
     stop_lon: float,
+    stop_name: str | None = None,
 ) -> bool:
     """Envia e-mail de alerta informando que um ônibus está próximo da parada.
 
@@ -35,12 +36,15 @@ def send_bus_alert(
         print("[email] SMTP_USER não configurado — e-mail não enviado.")
         return False
 
+    # Usa o endereço legível se disponível; caso contrário, mostra coordenadas
+    local_parada = stop_name if stop_name else f"(lat: {stop_lat}, lon: {stop_lon})"
+
     subject = f"[BusCarioca] Ônibus {bus_line} chegando em ~{eta_minutes} min"
     body = (
         f"Olá!\n\n"
         f"O ônibus da linha {bus_line} (ordem: {bus_ordem}) está a aproximadamente "
         f"{eta_minutes} minutos da sua parada "
-        f"(lat: {stop_lat}, lon: {stop_lon}).\n\n"
+        f"{local_parada}.\n\n"
         f"Prepare-se para sair!\n\n"
         f"— BusCarioca"
     )
